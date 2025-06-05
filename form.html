@@ -1,4 +1,4 @@
-<!DOCT<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -19,9 +19,9 @@
         <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-6 text-center">Datos de Instalación</h1>
         <p class="text-gray-600 mb-8 text-center">Por favor, rellena todos los campos requeridos para la instalación.</p>
 
-        <!-- El atributo 'action' se actualizará con la URL de tu Web App de Google Apps Script -->
-        <!-- El atributo 'method' debe ser 'POST' para enviar los datos al script -->
-        <form action="https://script.google.com/macros/s/AKfycbz_Q-EtgBLwp9224Mor7s_J7vaS_pv7Km8_L75QJPWJADNwpVExXb-ZM8K87W6mJwb6/exec" method="POST">
+        <!-- Se ha añadido un ID al formulario para poder manejarlo con JavaScript -->
+        <!-- Los atributos 'action' y 'method' se gestionarán con JavaScript (fetch) -->
+        <form id="installationForm">
             <!-- Sección: Dirección completa de instalación -->
             <div class="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
                 <h2 class="text-2xl font-semibold text-blue-700 mb-4">Dirección Completa de Instalación</h2>
@@ -159,13 +159,16 @@
                     </div>
                     <div class="md:col-span-2">
                         <div class="flex items-center">
-                            <input id="normoApp" name="normoApp" type="checkbox" required
+                            <input id="normoApp" name="normoApp" type="checkbox"
                                    class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
                             <label for="normoApp" class="ml-2 block text-sm font-medium text-gray-700">El instalador se ha descargado y registrado en la app de Normo</label>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Área para mostrar mensajes de confirmación o error -->
+            <div id="formMessage" class="mt-4 p-3 rounded-md text-center hidden"></div>
 
             <!-- Botón de Envío -->
             <div class="mt-10 text-center">
@@ -176,5 +179,49 @@
             </div>
         </form>
     </div>
+
+    <script>
+        // ¡IMPORTANTE! Reemplaza esta URL con la URL de tu Web App de Google Apps Script
+        const GOOGLE_APP_SCRIPT_URL = 'URL_DE_TU_WEB_APP_DE_GOOGLE_APPS_SCRIPT'; 
+
+        const form = document.getElementById('installationForm');
+        const formMessage = document.getElementById('formMessage');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Previene el envío tradicional del formulario
+
+            // Muestra un mensaje de carga
+            formMessage.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+            formMessage.classList.add('bg-blue-100', 'text-blue-700');
+            formMessage.textContent = 'Enviando datos... Por favor, espera.';
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(GOOGLE_APP_SCRIPT_URL, {
+                    method: 'POST',
+                    body: formData // Envía los datos directamente como FormData
+                });
+
+                if (response.ok) {
+                    const resultText = await response.text(); // El script de Apps Script devuelve texto
+                    formMessage.classList.remove('bg-blue-100', 'text-blue-700', 'bg-red-100', 'text-red-700');
+                    formMessage.classList.add('bg-green-100', 'text-green-700');
+                    formMessage.textContent = '¡Formulario enviado con éxito! Los datos han sido guardados. ' + resultText;
+                    formMessage.classList.remove('hidden');
+                    form.reset(); // Limpia los campos del formulario
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`Error al enviar el formulario: ${response.status} - ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Error al enviar el formulario:', error);
+                formMessage.classList.remove('bg-blue-100', 'text-blue-700', 'bg-green-100', 'text-green-700');
+                formMessage.classList.add('bg-red-100', 'text-red-700');
+                formMessage.textContent = 'Error al enviar el formulario. Por favor, inténtalo de nuevo. Detalle: ' + error.message;
+                formMessage.classList.remove('hidden');
+            }
+        });
+    </script>
 </body>
 </html>
