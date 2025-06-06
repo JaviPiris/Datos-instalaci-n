@@ -174,7 +174,7 @@
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm uppercase">
                         <div id="cifError" class="error-message hidden"></div>
                     </div>
-                    <!-- NUEVO CAMPO: Teléfono de la Comunidad/Empresa (Obligatorio) -->
+                    <!-- CAMPO: Teléfono de la Comunidad/Empresa (Obligatorio) -->
                     <div>
                         <label for="tlfComunidad" class="block text-sm font-medium text-gray-700 mb-1">Nº de Teléfono</label>
                         <input type="tel" id="tlfComunidad" name="tlfComunidad" required pattern="^(\+34|0034)?[6789]\d{8}$" title="Formato de teléfono: 9 dígitos (ej. 6XXXXXXXX) o con +34"
@@ -404,7 +404,7 @@
 
     <script>
         // ¡IMPORTANTE! Reemplaza esta URL con la URL de tu Web App de Google Apps Script
-        const GOOGLE_APP_SCRIPT_URL = 'URL_DE_TU_WEB_APP_DE_GOOGLE_APPS_SCRIPT'; 
+        const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzPx0diQcFHQ9fPxUXDqY91_Lceq9UhbRNwO0SZzQh8KGsx2URvBlpe4YO-sgSbAcD/exec'; 
 
         const form = document.getElementById('installationForm');
         const formMessage = document.getElementById('formMessage');
@@ -610,6 +610,64 @@
         }
 
 
+        /**
+         * Función para validar un campo y mostrar/ocultar mensaje de error.
+         * @param {HTMLElement} inputElement - El elemento input o select a validar.
+         * @param {HTMLElement} errorElement - El div donde mostrar el mensaje de error.
+         * @param {string} customMessage - Mensaje de error a mostrar si falla.
+         * @returns {boolean} - True si el campo es válido, false en caso contrario.
+         */
+        function validateField(inputElement, errorElement, customMessage) {
+            let isValid = true;
+            let message = '';
+
+            // Limpiar estilos y mensajes anteriores
+            inputElement.classList.remove('input-error');
+            errorElement.classList.add('hidden');
+            errorElement.textContent = '';
+
+            // Validación de campo requerido
+            if (inputElement.hasAttribute('required') && inputElement.value.trim() === '') {
+                isValid = false;
+                message = 'Este campo es obligatorio.';
+            } 
+            // Validación de patrón si el campo tiene un patrón y no está vacío
+            else if (inputElement.pattern && inputElement.value.trim() !== '' && !new RegExp(inputElement.pattern).test(inputElement.value.trim())) {
+                // Usar RegExp.test() para patron en vez de checkValidity() para mayor control
+                isValid = false;
+                message = customMessage || `Formato incorrecto. ${inputElement.title || ''}`;
+            }
+            // Validación específica para selects obligatorios que tienen la opción "Selecciona"
+            else if (inputElement.tagName === 'SELECT' && inputElement.hasAttribute('required') && inputElement.value === '') {
+                isValid = false;
+                message = 'Por favor, selecciona una opción.';
+            }
+            // Validación específica para email si tiene type="email" y no es válido
+            else if (inputElement.type === 'email' && inputElement.value.trim() !== '' && !inputElement.checkValidity()) {
+                isValid = false;
+                message = 'Introduce un email válido.';
+            }
+
+            if (!isValid) {
+                inputElement.classList.add('input-error');
+                errorElement.textContent = message;
+                errorElement.classList.remove('hidden');
+            }
+            return isValid;
+        }
+
+        // Función para limpiar todos los errores del formulario
+        function clearFormErrors() {
+            document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.classList.add('hidden');
+                el.textContent = '';
+            });
+            formMessage.classList.add('hidden');
+            formMessage.textContent = '';
+        }
+
+
         // Event listener para el envío del formulario
         form.addEventListener('submit', async (event) => {
             event.preventDefault(); // Previene el envío tradicional del formulario
@@ -626,39 +684,90 @@
             formIsValid = validateField(document.getElementById('provincia'), document.getElementById('provinciaError'), 'La provincia es obligatoria y debe ser autocompletada o seleccionada manualmente.') && formIsValid;
             
             // Campos opcionales de Dirección de Instalación que aún pueden tener validación de patrón si se rellenan
-            formIsValid = validateField(document.getElementById('bloquePortal'), document.getElementById('bloquePortalError'), 'Introduce el bloque/portal.') && formIsValid;
+            // Si el campo no es requerido pero tiene un valor, se valida su patrón.
+            if (document.getElementById('bloquePortal').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('bloquePortal'), document.getElementById('bloquePortalError'), 'Introduce el bloque/portal.') && formIsValid;
+            } else {
+                validateField(document.getElementById('bloquePortal'), document.getElementById('bloquePortalError'), ''); // Limpiar error si está vacío
+            }
 
 
             // Datos de la Comunidad/Empresa (obligatorios)
             formIsValid = validateField(document.getElementById('denominacionNombre'), document.getElementById('denominacionNombreError'), 'Introduce la denominación o nombre.') && formIsValid;
-            formIsValid = validateField(document.getElementById('tlfComunidad'), document.getElementById('tlfComunidadError'), 'Introduce un número de teléfono de la comunidad válido.') && formIsValid; // NUEVO CAMPO OBLIGATORIO
+            formIsValid = validateField(document.getElementById('tlfComunidad'), document.getElementById('tlfComunidadError'), 'Introduce un número de teléfono de la comunidad válido.') && formIsValid; 
             // CIF es opcional ahora, pero se valida si se introduce
-            formIsValid = validateField(document.getElementById('cif'), document.getElementById('cifError'), 'Introduce un CIF/NIF válido (ej. A12345678).') && formIsValid;
+            if (document.getElementById('cif').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('cif'), document.getElementById('cifError'), 'Introduce un CIF/NIF válido (ej. A12345678).') && formIsValid;
+            } else {
+                validateField(document.getElementById('cif'), document.getElementById('cifError'), '');
+            }
 
-            // Datos de Contacto (Administrativos y Facturación)
-            formIsValid = validateField(document.getElementById('contactoAAFF'), document.getElementById('contactoAAFFError'), 'Introduce la persona de contacto.') && formIsValid;
-            formIsValid = validateField(document.getElementById('emailContacto'), document.getElementById('emailContactoError'), 'Introduce un email válido.') && formIsValid;
-            // tlfContacto ahora es opcional
-            formIsValid = validateField(document.getElementById('tlfContacto'), document.getElementById('tlfContactoError'), 'Introduce un número de teléfono de contacto válido (9 dígitos o con prefijo +34).') && formIsValid; 
+
+            // Datos de Contacto (Administrativos y Facturación) (Todos Opcionales salvo tlfContacto)
+            if (document.getElementById('contactoAAFF').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('contactoAAFF'), document.getElementById('contactoAAFFError'), 'Introduce la persona de contacto.') && formIsValid;
+            } else {
+                 validateField(document.getElementById('contactoAAFF'), document.getElementById('contactoAAFFError'), '');
+            }
+            if (document.getElementById('emailContacto').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('emailContacto'), document.getElementById('emailContactoError'), 'Introduce un email válido.') && formIsValid;
+            } else {
+                validateField(document.getElementById('emailContacto'), document.getElementById('emailContactoError'), '');
+            }
+            if (document.getElementById('tlfContacto').value.trim() !== '') { // tlfContacto ahora es opcional
+                formIsValid = validateField(document.getElementById('tlfContacto'), document.getElementById('tlfContactoError'), 'Introduce un número de teléfono de contacto válido (9 dígitos o con prefijo +34).') && formIsValid; 
+            } else {
+                validateField(document.getElementById('tlfContacto'), document.getElementById('tlfContactoError'), '');
+            }
+
 
             // Dirección Completa de Contacto (todos opcionales, pero se validan si se rellenan)
-            formIsValid = validateField(document.getElementById('contactoTipoVia'), document.getElementById('contactoTipoViaError'), 'Por favor, selecciona un tipo de vía de contacto.') && formIsValid;
-            formIsValid = validateField(document.getElementById('contactoNombreVia'), document.getElementById('contactoNombreViaError'), 'Introduce el nombre de la vía de contacto.') && formIsValid;
-            formIsValid = validateField(document.getElementById('contactoNumero'), document.getElementById('contactoNumeroError'), 'Introduce el número de contacto.') && formIsValid;
-            formIsValid = validateField(document.getElementById('contactoBloquePortal'), document.getElementById('contactoBloquePortalError'), 'Introduce el bloque/portal de contacto.') && formIsValid;
-            formIsValid = validateField(document.getElementById('contactoCodigoPostal'), document.getElementById('contactoCodigoPostalError'), 'Introduce un código postal de contacto válido (5 dígitos).') && formIsValid;
-            formIsValid = validateField(document.getElementById('contactoPoblacionLocalidad'), document.getElementById('contactoPoblacionLocalidadError'), 'La población de contacto es obligatoria si se ingresa CP.') && formIsValid;
-            formIsValid = validateField(document.getElementById('contactoProvincia'), document.getElementById('contactoProvinciaError'), 'La provincia de contacto es obligatoria si se ingresa CP.') && formIsValid;
+            if (document.getElementById('contactoTipoVia').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('contactoTipoVia'), document.getElementById('contactoTipoViaError'), 'Por favor, selecciona un tipo de vía de contacto.') && formIsValid;
+            } else { validateField(document.getElementById('contactoTipoVia'), document.getElementById('contactoTipoViaError'), ''); }
+            if (document.getElementById('contactoNombreVia').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('contactoNombreVia'), document.getElementById('contactoNombreViaError'), 'Introduce el nombre de la vía de contacto.') && formIsValid;
+            } else { validateField(document.getElementById('contactoNombreVia'), document.getElementById('contactoNombreViaError'), ''); }
+            if (document.getElementById('contactoNumero').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('contactoNumero'), document.getElementById('contactoNumeroError'), 'Introduce el número de contacto.') && formIsValid;
+            } else { validateField(document.getElementById('contactoNumero'), document.getElementById('contactoNumeroError'), ''); }
+            if (document.getElementById('contactoBloquePortal').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('contactoBloquePortal'), document.getElementById('contactoBloquePortalError'), 'Introduce el bloque/portal de contacto.') && formIsValid;
+            } else { validateField(document.getElementById('contactoBloquePortal'), document.getElementById('contactoBloquePortalError'), ''); }
+            // Los campos de CP de contacto y sus dependencias ya se validan en su propia función autocompleteAddress.
+            // Aquí solo nos aseguramos de que si se ha introducido un CP, los campos autocompletados no estén vacíos.
+            if (document.getElementById('contactoCodigoPostal').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('contactoCodigoPostal'), document.getElementById('contactoCodigoPostalError'), 'Introduce un código postal de contacto válido (5 dígitos).') && formIsValid;
+                formIsValid = validateField(document.getElementById('contactoPoblacionLocalidad'), document.getElementById('contactoPoblacionLocalidadError'), 'La población de contacto es obligatoria si se ingresa CP.') && formIsValid;
+                formIsValid = validateField(document.getElementById('contactoProvincia'), document.getElementById('contactoProvinciaError'), 'La provincia de contacto es obligatoria si se ingresa CP.') && formIsValid;
+            } else {
+                validateField(document.getElementById('contactoCodigoPostal'), document.getElementById('contactoCodigoPostalError'), '');
+                validateField(document.getElementById('contactoPoblacionLocalidad'), document.getElementById('contactoPoblacionLocalidadError'), '');
+                validateField(document.getElementById('contactoProvincia'), document.getElementById('contactoProvinciaError'), '');
+            }
+
 
             // Datos Bancarios (todos opcionales, pero se validan si se rellenan)
-            formIsValid = validateField(document.getElementById('titularCuenta'), document.getElementById('titularCuentaError'), 'Introduce el titular de la cuenta.') && formIsValid;
-            formIsValid = validateField(document.getElementById('banco'), document.getElementById('bancoError'), 'Introduce el nombre del banco.') && formIsValid;
-            formIsValid = validateField(document.getElementById('iban'), document.getElementById('ibanError'), 'Introduce un IBAN válido (ej. ESXX XXXX XXXX XXXX XXXX XXXX).') && formIsValid;
+            if (document.getElementById('titularCuenta').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('titularCuenta'), document.getElementById('titularCuentaError'), 'Introduce el titular de la cuenta.') && formIsValid;
+            } else { validateField(document.getElementById('titularCuenta'), document.getElementById('titularCuentaError'), ''); }
+            if (document.getElementById('banco').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('banco'), document.getElementById('bancoError'), 'Introduce el nombre del banco.') && formIsValid;
+            } else { validateField(document.getElementById('banco'), document.getElementById('bancoError'), ''); }
+            if (document.getElementById('iban').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('iban'), document.getElementById('ibanError'), 'Introduce un IBAN válido (ej. ESXX XXXX XXXX XXXX XXXX XXXX).') && formIsValid;
+            } else { validateField(document.getElementById('iban'), document.getElementById('ibanError'), ''); }
 
             // Datos del Instalador y Cita (todos opcionales, pero se validan si se rellenan)
-            formIsValid = validateField(document.getElementById('tlfInstalador'), document.getElementById('tlfInstaladorError'), 'Introduce un número de teléfono válido (9 dígitos o con prefijo +34).') && formIsValid;
-            formIsValid = validateField(document.getElementById('fechaInstalacion'), document.getElementById('fechaInstalacionError'), 'Selecciona la fecha de instalación.') && formIsValid;
-            formIsValid = validateField(document.getElementById('horaInstalacion'), document.getElementById('horaInstalacionError'), 'Selecciona la hora de instalación.') && formIsValid;
+            if (document.getElementById('tlfInstalador').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('tlfInstalador'), document.getElementById('tlfInstaladorError'), 'Introduce un número de teléfono válido (9 dígitos o con prefijo +34).') && formIsValid;
+            } else { validateField(document.getElementById('tlfInstalador'), document.getElementById('tlfInstaladorError'), ''); }
+            if (document.getElementById('fechaInstalacion').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('fechaInstalacion'), document.getElementById('fechaInstalacionError'), 'Selecciona la fecha de instalación.') && formIsValid;
+            } else { validateField(document.getElementById('fechaInstalacion'), document.getElementById('fechaInstalacionError'), ''); }
+            if (document.getElementById('horaInstalacion').value.trim() !== '') {
+                formIsValid = validateField(document.getElementById('horaInstalacion'), document.getElementById('horaInstalacionError'), 'Selecciona la hora de instalación.') && formIsValid;
+            } else { validateField(document.getElementById('horaInstalacion'), document.getElementById('horaInstalacionError'), ''); }
             
             // Si el formulario no es válido, detenemos el envío y mostramos un mensaje general.
             if (!formIsValid) {
@@ -694,6 +803,7 @@
                     formMessage.textContent = '¡Formulario enviado con éxito! Los datos han sido guardados. ';
                     formMessage.classList.remove('hidden');
                     form.reset(); 
+                    clearFormErrors(); // Limpiar errores visuales después de resetear el formulario
                 } else {
                     const errorText = await response.text();
                     throw new Error(`Error al enviar el formulario: ${response.status} - ${errorText}`);
@@ -715,17 +825,38 @@
         contactoCodigoPostalInput.addEventListener('blur', () => autocompleteAddress(contactoCodigoPostalInput, contactoPoblacionLocalidadInput, contactoProvinciaSelect, document.getElementById('contactoCodigoPostalError'), document.getElementById('contactoPoblacionLocalidadError'), document.getElementById('contactoProvinciaError')));
 
 
-        // Añadir escuchadores de eventos para validación en tiempo real (al salir del campo)
+        // Añadir escuchadores de eventos para validación en tiempo real (al escribir y al salir del campo)
         document.querySelectorAll('input:not([type="checkbox"]):not([readonly]), select:not([readonly])').forEach(input => {
             // Excluimos los campos de código postal que ya tienen su propia lógica de input/blur
-            if (input.id !== 'codigoPostal' && input.id !== 'contactoCodigoPostal') {
-                input.addEventListener('blur', () => {
-                    const errorElementId = input.id + 'Error';
-                    const errorElement = document.getElementById(errorElementId);
-                    if (errorElement) { // Asegurarse de que el div de error exista
-                        // Usar el título del input como mensaje genérico, o un mensaje predeterminado si es un select
-                        const customMessage = input.tagName === 'SELECT' ? 'Por favor, selecciona una opción.' : input.title;
-                        validateField(input, errorElement, customMessage);
+            if (input.id === 'codigoPostal' || input.id === 'contactoCodigoPostal') {
+                return; // Saltar estos campos, ya están cubiertos
+            }
+
+            const errorElementId = input.id + 'Error';
+            const errorElement = document.getElementById(errorElementId);
+            
+            // Validar al perder el foco (blur) - esencial para campos obligatorios vacíos y para una validación final
+            input.addEventListener('blur', () => {
+                if (errorElement) {
+                    const customMessage = input.tagName === 'SELECT' ? 'Por favor, selecciona una opción.' : (input.title || 'Campo inválido.');
+                    validateField(input, errorElement, customMessage);
+                }
+            });
+
+            // Validar al escribir (input) - para campos con pattern o de tipo email, o cuando el campo es obligatorio y tiene contenido
+            if (input.pattern || input.type === 'email' || input.hasAttribute('required')) {
+                 input.addEventListener('input', () => {
+                    if (errorElement) {
+                        // Si es requerido, se valida si tiene contenido o no. Si no es requerido, solo si tiene contenido.
+                        if (input.hasAttribute('required') || input.value.trim() !== '') {
+                            const customMessage = input.tagName === 'SELECT' ? 'Por favor, selecciona una opción.' : (input.title || 'Formato incorrecto.');
+                             validateField(input, errorElement, customMessage);
+                        } else {
+                            // Si el campo es opcional y se vacía, limpiar el error
+                            input.classList.remove('input-error');
+                            errorElement.classList.add('hidden');
+                            errorElement.textContent = '';
+                        }
                     }
                 });
             }
