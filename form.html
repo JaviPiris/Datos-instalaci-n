@@ -403,7 +403,7 @@
     </div>
 
     <script>
-        // ¡IMPORTANTE! Reemplaza esta URL con la URL de tu Web App de Google Apps Script
+        // ¡IMPORTANT! Reemplaza esta URL con la URL de tu Web App de Google Apps Script
         const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzPx0diQcFHQ9fPxUXDqY91_Lceq9UhbRNwO0SZzQh8KGsx2URvBlpe4YO-sgSbAcD/exec'; 
 
         const form = document.getElementById('installationForm');
@@ -445,11 +445,9 @@
 
                 if (data && data.length > 0) {
                     const result = data[0].address;
-                    let ciudad = '';
-                    let provincia = '';
-
-                    ciudad = result.city || result.town || result.village || result.county;
-                    provincia = result.province; 
+                    // Asegurarse de que provincia sea una cadena de texto, incluso si Nominatim no la devuelve
+                    let ciudad = result.city || result.town || result.village || result.county || '';
+                    let provincia = result.province || ''; 
 
                     const provinceMapping = {
                         'comunidad de madrid': 'Madrid',
@@ -864,3 +862,4 @@
     </script>
 </body>
 </html>
+
