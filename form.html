@@ -447,7 +447,7 @@
                     const result = data[0].address;
                     // Asegurarse de que provincia sea una cadena de texto, incluso si Nominatim no la devuelve
                     let ciudad = result.city || result.town || result.village || result.county || '';
-                    let provincia = result.province || ''; 
+                    let provincia = result.state || result.county || result.province || ''; 
 
                     const provinceMapping = {
                         'comunidad de madrid': 'Madrid',
