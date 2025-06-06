@@ -12,6 +12,11 @@
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6; /* Color de fondo suave */
         }
+        /* Estilo para campos readonly */
+        input[readonly], select[readonly] {
+            background-color: #e2e8f0; /* bg-gray-200 */
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8">
@@ -19,7 +24,7 @@
         <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-6 text-center">Datos de Instalación</h1>
         <p class="text-gray-600 mb-8 text-center">Por favor, rellena todos los campos requeridos para la instalación.</p>
 
-        <!-- El atributo 'action' se actualizará con la URL de tu Web App de Google Apps Script -->
+        <!-- El atributo 'action' se gestionará con JavaScript (fetch) -->
         <!-- El atributo 'method' se gestionará con JavaScript (fetch) -->
         <form id="installationForm">
             <!-- Sección: Dirección completa de instalación -->
@@ -65,14 +70,20 @@
                         <input type="text" id="bloquePortal" name="bloquePortal" required
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                     </div>
+                    <!-- Campo para Código Postal -->
+                    <div>
+                        <label for="codigoPostal" class="block text-sm font-medium text-gray-700 mb-1">Código Postal</label>
+                        <input type="text" id="codigoPostal" name="codigoPostal" required maxlength="5" pattern="[0-9]{5}" title="Introduce un código postal de 5 dígitos"
+                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
                     <div>
                         <label for="poblacionLocalidad" class="block text-sm font-medium text-gray-700 mb-1">Población / Localidad</label>
-                        <input type="text" id="poblacionLocalidad" name="poblacionLocalidad" required
+                        <input type="text" id="poblacionLocalidad" name="poblacionLocalidad" required readonly
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                     </div>
                     <div>
                         <label for="provincia" class="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
-                        <select id="provincia" name="provincia" required
+                        <select id="provincia" name="provincia" required readonly
                                 class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out appearance-none">
                             <option value="">Selecciona una provincia</option>
                             <option value="Alava">Álava</option>
@@ -206,14 +217,20 @@
                             <input type="text" id="contactoBloquePortal" name="contactoBloquePortal" required
                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
                         </div>
+                        <!-- Nuevo campo para Código Postal (Contacto) -->
+                        <div>
+                            <label for="contactoCodigoPostal" class="block text-sm font-medium text-gray-700 mb-1">Código Postal (Contacto)</label>
+                            <input type="text" id="contactoCodigoPostal" name="contactoCodigoPostal" required maxlength="5" pattern="[0-9]{5}" title="Introduce un código postal de 5 dígitos"
+                                   class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
+                        </div>
                         <div>
                             <label for="contactoPoblacionLocalidad" class="block text-sm font-medium text-gray-700 mb-1">Población / Localidad (Contacto)</label>
-                            <input type="text" id="contactoPoblacionLocalidad" name="contactoPoblacionLocalidad" required
+                            <input type="text" id="contactoPoblacionLocalidad" name="contactoPoblacionLocalidad" required readonly
                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
                         </div>
                         <div>
                             <label for="contactoProvincia" class="block text-sm font-medium text-gray-700 mb-1">Provincia (Contacto)</label>
-                            <select id="contactoProvincia" name="contactoProvincia" required
+                            <select id="contactoProvincia" name="contactoProvincia" required readonly
                                     class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out appearance-none">
                                 <option value="">Selecciona una provincia</option>
                                 <option value="Alava">Álava</option>
@@ -345,11 +362,198 @@
         const form = document.getElementById('installationForm');
         const formMessage = document.getElementById('formMessage');
 
+        // Referencias a los campos de Código Postal y sus respectivos campos de Población/Provincia
+        const codigoPostalInput = document.getElementById('codigoPostal');
+        const poblacionLocalidadInput = document.getElementById('poblacionLocalidad');
+        const provinciaSelect = document.getElementById('provincia');
+
+        const contactoCodigoPostalInput = document.getElementById('contactoCodigoPostal');
+        const contactoPoblacionLocalidadInput = document.getElementById('contactoPoblacionLocalidad');
+        const contactoProvinciaSelect = document.getElementById('contactoProvincia');
+
+        /**
+         * Función para obtener datos de población y provincia por código postal usando Nominatim.
+         * @param {string} postalCode - El código postal de 5 dígitos.
+         * @returns {Promise<Object>} - Un objeto con { success: boolean, ciudad: string, provincia: string, message: string }
+         */
+        async function fetchPostalCodeData(postalCode) {
+            // URL de la API de Nominatim para buscar por código postal y país (España)
+            // Se usa "es" para el lenguaje de la respuesta.
+            const NOMINATIM_URL = `https://nominatim.openstreetmap.org/search?postalcode=${postalCode}&country=Spain&format=json&addressdetails=1&limit=1&accept-language=es`;
+            
+            try {
+                const response = await fetch(NOMINATIM_URL, {
+                    headers: {
+                        // User-Agent es requerido por Nominatim para un uso adecuado
+                        // Reemplaza 'tu-email@ejemplo.com' con un email real o un identificador único
+                        'User-Agent': 'FormularioInstalacionApp/1.0 (tu-email@ejemplo.com)' 
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (data && data.length > 0) {
+                    const result = data[0].address;
+                    let ciudad = '';
+                    let provincia = '';
+
+                    // Intentar extraer ciudad y provincia de la respuesta de Nominatim
+                    // Nominatim puede devolver la provincia en 'state' o 'county'
+                    // Para España, 'state' suele ser la comunidad autónoma, y 'county' o 'province' la provincia
+                    // Ajustamos la lógica para buscar por nombres comunes de provincias españolas
+                    
+                    ciudad = result.city || result.town || result.village || result.county;
+                    provincia = result.state || result.county || result.province; // Buscar en varios campos
+
+                    // Pequeño mapeo para algunas provincias que Nominatim podría devolver de forma genérica
+                    const provinceMapping = {
+                        'comunidad de madrid': 'Madrid',
+                        'comunitat valenciana': 'Valencia', // Podría ser Valencia, Alicante, Castellón
+                        'cataluña': 'Barcelona', // Podría ser Barcelona, Girona, Lleida, Tarragona
+                        'andalucía': 'Sevilla', // Etc.
+                        'país vasco': 'Vizcaya', // O Álava, Guipúzcoa
+                        // Añade más mapeos si encuentras inconsistencias
+                    };
+
+                    // Normalizar y aplicar mapeo
+                    const normalizeText = (text) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+                    const normalizedProvincia = normalizeText(provincia);
+
+                    if (provinceMapping[normalizedProvincia]) {
+                        provincia = provinceMapping[normalizedProvincia];
+                    } else {
+                        // Si no hay mapeo, intenta usar el nombre tal cual, capitalizando la primera letra
+                        provincia = provincia.charAt(0).toUpperCase() + provincia.slice(1);
+                    }
+
+                    if (ciudad && provincia) {
+                        console.log(`Datos de Nominatim para CP ${postalCode}: Ciudad '${ciudad}', Provincia '${provincia}'`); // Para depuración
+                        return { success: true, ciudad: ciudad, provincia: provincia };
+                    } else {
+                        return { success: false, message: 'Datos de población/provincia incompletos para este CP. Por favor, rellena manualmente.' };
+                    }
+                } else {
+                    return { success: false, message: 'Código postal no encontrado en España. Por favor, introduce manualmente.' };
+                }
+            } catch (error) {
+                console.error('Error al consultar la API de Nominatim:', error);
+                return { success: false, message: 'Error al conectar con el servicio de códigos postales. Intenta de nuevo más tarde.' };
+            }
+        }
+
+        /**
+         * Autocompleta los campos de población y provincia basándose en el código postal.
+         * @param {HTMLElement} postalCodeInput - El input del código postal.
+         * @param {HTMLElement} poblacionInput - El input de la población/localidad.
+         * @param {HTMLElement} provinciaSelect - El select de la provincia.
+         */
+        async function autocompleteAddress(postalCodeInput, poblacionInput, provinciaSelect) {
+            const postalCode = postalCodeInput.value.trim();
+
+            // Limpia los campos si el CP está vacío o es inválido
+            if (postalCode.length !== 5 || !/^[0-9]{5}$/.test(postalCode)) {
+                poblacionInput.value = '';
+                provinciaSelect.value = '';
+                // Habilitar selección manual si el CP es inválido
+                poblacionInput.readOnly = false;
+                provinciaSelect.readOnly = false;
+                return;
+            }
+
+            // Deshabilitar campos mientras se busca
+            poblacionInput.readOnly = true;
+            provinciaSelect.readOnly = true;
+            poblacionInput.value = 'Buscando...';
+            // provinciaSelect.value = ''; // No limpiar completamente para mantener la opción 'Selecciona una provincia'
+
+            try {
+                const data = await fetchPostalCodeData(postalCode); 
+                if (data.success) {
+                    poblacionInput.value = data.ciudad;
+                    
+                    // Normalizar el nombre de provincia de la API para la comparación
+                    const normalizedDataProvincia = data.provincia.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+                    let optionFound = false;
+                    Array.from(provinciaSelect.options).forEach(option => {
+                        const normalizedOption = option.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                        if (normalizedOption === normalizedDataProvincia) {
+                            provinciaSelect.value = option.value; // Establece el valor exacto de la opción
+                            optionFound = true;
+                        }
+                    });
+                    
+                    if (!optionFound) {
+                        console.warn(`Provincia '${data.provincia}' obtenida de la API no encontrada en la lista de opciones del select.`);
+                        // Si no se encuentra una coincidencia exacta, se queda la opción por defecto o vacía
+                        provinciaSelect.value = ''; 
+                    }
+                    poblacionInput.readOnly = true; // Mantener readonly si se encontró
+                    provinciaSelect.readOnly = true; // Mantener readonly si se encontró
+
+                } else {
+                    poblacionInput.value = '';
+                    provinciaSelect.value = '';
+                    // Mostrar mensaje de error en la UI
+                    formMessage.classList.remove('hidden', 'bg-blue-100', 'text-blue-700', 'bg-green-100', 'text-green-700');
+                    formMessage.classList.add('bg-orange-100', 'text-orange-700'); // Color para advertencia
+                    formMessage.textContent = data.message; // Mensaje de error más específico de la función
+                    formMessage.classList.remove('hidden');
+                    // Habilitar campos para entrada manual si no se encontró
+                    poblacionInput.readOnly = false;
+                    provinciaSelect.readOnly = false;
+                }
+            } catch (error) {
+                console.error('Error general al obtener datos del código postal:', error);
+                poblacionInput.value = '';
+                provinciaSelect.value = '';
+                formMessage.classList.remove('hidden', 'bg-blue-100', 'text-blue-700', 'bg-green-100', 'text-green-700');
+                formMessage.classList.add('bg-red-100', 'text-red-700');
+                formMessage.textContent = 'Error de red o servicio de CP. Por favor, inténtalo de nuevo o rellena manualmente.';
+                formMessage.classList.remove('hidden');
+            } finally {
+                // La lógica de readOnly ahora se gestiona dentro del if/else de data.success
+            }
+        }
+
+        // Añadir escuchadores de eventos para el Código Postal de Instalación
+        codigoPostalInput.addEventListener('input', () => {
+            // Solo buscar si el CP tiene 5 dígitos
+            if (codigoPostalInput.value.trim().length === 5) {
+                autocompleteAddress(codigoPostalInput, poblacionLocalidadInput, provinciaSelect);
+            } else {
+                poblacionLocalidadInput.value = '';
+                provinciaSelect.value = '';
+                poblacionLocalidadInput.readOnly = false;
+                provinciaSelect.readOnly = false;
+                formMessage.classList.add('hidden'); // Ocultar mensaje si el CP es corto
+            }
+        });
+
+        // Añadir escuchadores de eventos para el Código Postal de Contacto
+        contactoCodigoPostalInput.addEventListener('input', () => {
+            // Solo buscar si el CP tiene 5 dígitos
+            if (contactoCodigoPostalInput.value.trim().length === 5) {
+                autocompleteAddress(contactoCodigoPostalInput, contactoPoblacionLocalidadInput, contactoProvinciaSelect);
+            } else {
+                contactoPoblacionLocalidadInput.value = '';
+                contactoProvinciaSelect.value = '';
+                contactoPoblacionLocalidadInput.readOnly = false;
+                contactoProvinciaSelect.readOnly = false;
+                formMessage.classList.add('hidden'); // Ocultar mensaje si el CP es corto
+            }
+        });
+
+
         form.addEventListener('submit', async (event) => {
             event.preventDefault(); // Previene el envío tradicional del formulario
 
-            // Muestra un mensaje de carga
-            formMessage.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+            // Oculta cualquier mensaje anterior y muestra uno de carga
+            formMessage.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-orange-100', 'text-orange-700');
             formMessage.classList.add('bg-blue-100', 'text-blue-700');
             formMessage.textContent = 'Enviando datos... Por favor, espera.';
 
@@ -363,7 +567,7 @@
 
                 if (response.ok) {
                     const resultText = await response.text(); // El script de Apps Script devuelve texto
-                    formMessage.classList.remove('bg-blue-100', 'text-blue-700', 'bg-red-100', 'text-red-700');
+                    formMessage.classList.remove('bg-blue-100', 'text-blue-700', 'bg-red-100', 'text-red-700', 'bg-orange-100', 'text-orange-700');
                     formMessage.classList.add('bg-green-100', 'text-green-700');
                     formMessage.textContent = '¡Formulario enviado con éxito! Los datos han sido guardados. ' + resultText;
                     formMessage.classList.remove('hidden');
@@ -374,7 +578,7 @@
                 }
             } catch (error) {
                 console.error('Error al enviar el formulario:', error);
-                formMessage.classList.remove('bg-blue-100', 'text-blue-700', 'bg-green-100', 'text-green-700');
+                formMessage.classList.remove('bg-blue-100', 'text-blue-700', 'bg-green-100', 'text-green-700', 'bg-orange-100', 'text-orange-700');
                 formMessage.classList.add('bg-red-100', 'text-red-700');
                 formMessage.textContent = 'Error al enviar el formulario. Por favor, inténtalo de nuevo. Detalle: ' + error.message;
                 formMessage.classList.remove('hidden');
