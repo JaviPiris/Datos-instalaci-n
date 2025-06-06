@@ -407,7 +407,7 @@
                     // Ajustamos la lógica para buscar por nombres comunes de provincias españolas
                     
                     ciudad = result.city || result.town || result.village || result.county;
-                    provincia = result.state || result.county || result.province; // Buscar en varios campos
+                    provincia = result.province; // Buscar en varios campos
 
                     // Pequeño mapeo para algunas provincias que Nominatim podría devolver de forma genérica
                     const provinceMapping = {
