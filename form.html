@@ -17,6 +17,17 @@
             background-color: #e2e8f0; /* bg-gray-200 */
             cursor: not-allowed;
         }
+        /* Estilo para campos con error */
+        input.input-error, select.input-error {
+            border-color: #ef4444; /* Rojo - border-red-500 */
+            box-shadow: 0 0 0 1px #ef4444;
+        }
+        /* Estilo para mensajes de error */
+        .error-message {
+            color: #ef4444; /* Rojo - text-red-500 */
+            font-size: 0.875rem; /* text-sm */
+            margin-top: 0.25rem; /* mt-1 */
+        }
     </style>
 </head>
 <body class="p-4 sm:p-6 md:p-8">
@@ -24,8 +35,6 @@
         <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-6 text-center">Datos de Instalación</h1>
         <p class="text-gray-600 mb-8 text-center">Por favor, rellena todos los campos requeridos para la instalación.</p>
 
-        <!-- El atributo 'action' se gestionará con JavaScript (fetch) -->
-        <!-- El atributo 'method' se gestionará con JavaScript (fetch) -->
         <form id="installationForm">
             <!-- Sección: Dirección completa de instalación -->
             <div class="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
@@ -54,32 +63,38 @@
                             <option value="barrio">Barrio</option>
                             <option value="poligono">Polígono Industrial</option>
                         </select>
+                        <div id="tipoViaError" class="error-message hidden"></div>
                     </div>
                     <div>
                         <label for="nombreVia" class="block text-sm font-medium text-gray-700 mb-1">Nombre de la Vía</label>
                         <input type="text" id="nombreVia" name="nombreVia" required
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <div id="nombreViaError" class="error-message hidden"></div>
                     </div>
                     <div>
                         <label for="numero" class="block text-sm font-medium text-gray-700 mb-1">Número</label>
                         <input type="text" id="numero" name="numero" required
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <div id="numeroError" class="error-message hidden"></div>
                     </div>
                     <div>
                         <label for="bloquePortal" class="block text-sm font-medium text-gray-700 mb-1">Bloque / Portal</label>
-                        <input type="text" id="bloquePortal" name="bloquePortal" required
+                        <input type="text" id="bloquePortal" name="bloquePortal"
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <div id="bloquePortalError" class="error-message hidden"></div>
                     </div>
                     <!-- Campo para Código Postal -->
                     <div>
                         <label for="codigoPostal" class="block text-sm font-medium text-gray-700 mb-1">Código Postal</label>
                         <input type="text" id="codigoPostal" name="codigoPostal" required maxlength="5" pattern="[0-9]{5}" title="Introduce un código postal de 5 dígitos"
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <div id="codigoPostalError" class="error-message hidden"></div>
                     </div>
                     <div>
                         <label for="poblacionLocalidad" class="block text-sm font-medium text-gray-700 mb-1">Población / Localidad</label>
                         <input type="text" id="poblacionLocalidad" name="poblacionLocalidad" required readonly
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <div id="poblacionLocalidadError" class="error-message hidden"></div>
                     </div>
                     <div>
                         <label for="provincia" class="block text-sm font-medium text-gray-700 mb-1">Provincia</label>
@@ -137,6 +152,7 @@
                             <option value="Zamora">Zamora</option>
                             <option value="Zaragoza">Zaragoza</option>
                         </select>
+                        <div id="provinciaError" class="error-message hidden"></div>
                     </div>
                 </div>
             </div>
@@ -149,12 +165,21 @@
                         <label for="denominacionNombre" class="block text-sm font-medium text-gray-700 mb-1">Denominación / Nombre (presidente)</label>
                         <input type="text" id="denominacionNombre" name="denominacionNombre" required
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                        <div id="denominacionNombreError" class="error-message hidden"></div>
                     </div>
                     <div>
                         <label for="cif" class="block text-sm font-medium text-gray-700 mb-1">C.I.F.</label>
                         <!-- Validación CIF/NIF básico: 1 letra, 7-8 dígitos, 1 letra/dígito final -->
-                        <input type="text" id="cif" name="cif" required pattern="^[XYZxyz]?[0-9]{7}[A-HJ-NP-TV-Z]$|^[A-HJ-NP-TV-Z][0-9]{7}[A-Z0-9]$" title="Formato CIF/NIF: ej. A12345678, X12345678"
+                        <input type="text" id="cif" name="cif" pattern="^[XYZxyz]?[0-9]{7}[A-HJ-NP-TV-Z]$|^[A-HJ-NP-TV-Z][0-9]{7}[A-Z0-9]$" title="Formato CIF/NIF: ej. A12345678, X12345678"
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm uppercase">
+                        <div id="cifError" class="error-message hidden"></div>
+                    </div>
+                    <!-- NUEVO CAMPO: Teléfono de la Comunidad/Empresa (Obligatorio) -->
+                    <div>
+                        <label for="tlfComunidad" class="block text-sm font-medium text-gray-700 mb-1">Nº de Teléfono</label>
+                        <input type="tel" id="tlfComunidad" name="tlfComunidad" required pattern="^(\+34|0034)?[6789]\d{8}$" title="Formato de teléfono: 9 dígitos (ej. 6XXXXXXXX) o con +34"
+                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                        <div id="tlfComunidadError" class="error-message hidden"></div>
                     </div>
                 </div>
             </div>
@@ -165,13 +190,22 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="contactoAAFF" class="block text-sm font-medium text-gray-700 mb-1">AAFF o Persona de Contacto</label>
-                        <input type="text" id="contactoAAFF" name="contactoAAFF" required
+                        <input type="text" id="contactoAAFF" name="contactoAAFF"
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
+                        <div id="contactoAAFFError" class="error-message hidden"></div>
                     </div>
-                    <div class="md:col-span-2">
+                    <div>
                         <label for="emailContacto" class="block text-sm font-medium text-gray-700 mb-1">Email de Contacto</label>
-                        <input type="email" id="emailContacto" name="emailContacto" required
+                        <input type="email" id="emailContacto" name="emailContacto"
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
+                        <div id="emailContactoError" class="error-message hidden"></div>
+                    </div>
+                    <!-- CAMPO MODIFICADO: Teléfono de Contacto (AHORA OPCIONAL) -->
+                    <div>
+                        <label for="tlfContacto" class="block text-sm font-medium text-gray-700 mb-1">Nº de Teléfono de Contacto</label>
+                        <input type="tel" id="tlfContacto" name="tlfContacto" pattern="^(\+34|0034)?[6789]\d{8}$" title="Formato de teléfono: 9 dígitos (ej. 6XXXXXXXX) o con +34"
+                               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
+                        <div id="tlfContactoError" class="error-message hidden"></div>
                     </div>
                 </div>
                 <!-- Campos detallados de la dirección de contacto -->
@@ -180,7 +214,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="contactoTipoVia" class="block text-sm font-medium text-gray-700 mb-1">Tipo de Vía (Contacto)</label>
-                            <select id="contactoTipoVia" name="contactoTipoVia" required
+                            <select id="contactoTipoVia" name="contactoTipoVia"
                                     class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out appearance-none">
                                 <option value="">Selecciona</option>
                                 <option value="calle">Calle</option>
@@ -201,36 +235,42 @@
                                 <option value="barrio">Barrio</option>
                                 <option value="poligono">Polígono Industrial</option>
                             </select>
+                            <div id="contactoTipoViaError" class="error-message hidden"></div>
                         </div>
                         <div>
                             <label for="contactoNombreVia" class="block text-sm font-medium text-gray-700 mb-1">Nombre de la Vía (Contacto)</label>
-                            <input type="text" id="contactoNombreVia" name="contactoNombreVia" required
+                            <input type="text" id="contactoNombreVia" name="contactoNombreVia"
                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
+                            <div id="contactoNombreViaError" class="error-message hidden"></div>
                         </div>
                         <div>
                             <label for="contactoNumero" class="block text-sm font-medium text-gray-700 mb-1">Número (Contacto)</label>
-                            <input type="text" id="contactoNumero" name="contactoNumero" required
+                            <input type="text" id="contactoNumero" name="contactoNumero"
                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
+                            <div id="contactoNumeroError" class="error-message hidden"></div>
                         </div>
                         <div>
                             <label for="contactoBloquePortal" class="block text-sm font-medium text-gray-700 mb-1">Bloque / Portal (Contacto)</label>
-                            <input type="text" id="contactoBloquePortal" name="contactoBloquePortal" required
+                            <input type="text" id="contactoBloquePortal" name="contactoBloquePortal"
                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
+                            <div id="contactoBloquePortalError" class="error-message hidden"></div>
                         </div>
-                        <!-- Nuevo campo para Código Postal (Contacto) -->
+                        <!-- Campo para Código Postal (Contacto) -->
                         <div>
                             <label for="contactoCodigoPostal" class="block text-sm font-medium text-gray-700 mb-1">Código Postal (Contacto)</label>
-                            <input type="text" id="contactoCodigoPostal" name="contactoCodigoPostal" required maxlength="5" pattern="[0-9]{5}" title="Introduce un código postal de 5 dígitos"
+                            <input type="text" id="contactoCodigoPostal" name="contactoCodigoPostal" maxlength="5" pattern="[0-9]{5}" title="Introduce un código postal de 5 dígitos"
                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
+                            <div id="contactoCodigoPostalError" class="error-message hidden"></div>
                         </div>
                         <div>
                             <label for="contactoPoblacionLocalidad" class="block text-sm font-medium text-gray-700 mb-1">Población / Localidad (Contacto)</label>
-                            <input type="text" id="contactoPoblacionLocalidad" name="contactoPoblacionLocalidad" required readonly
+                            <input type="text" id="contactoPoblacionLocalidad" name="contactoPoblacionLocalidad" readonly
                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
+                            <div id="contactoPoblacionLocalidadError" class="error-message hidden"></div>
                         </div>
                         <div>
                             <label for="contactoProvincia" class="block text-sm font-medium text-gray-700 mb-1">Provincia (Contacto)</label>
-                            <select id="contactoProvincia" name="contactoProvincia" required readonly
+                            <select id="contactoProvincia" name="contactoProvincia" readonly
                                     class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm transition duration-150 ease-in-out appearance-none">
                                 <option value="">Selecciona una provincia</option>
                                 <option value="Alava">Álava</option>
@@ -284,6 +324,7 @@
                                 <option value="Zamora">Zamora</option>
                                 <option value="Zaragoza">Zaragoza</option>
                             </select>
+                            <div id="contactoProvinciaError" class="error-message hidden"></div>
                         </div>
                     </div>
                 </div>
@@ -292,20 +333,23 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label for="titularCuenta" class="block text-sm font-medium text-gray-700 mb-1">Titular de la Cuenta</label>
-                            <input type="text" id="titularCuenta" name="titularCuenta" required
+                            <input type="text" id="titularCuenta" name="titularCuenta"
                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
+                            <div id="titularCuentaError" class="error-message hidden"></div>
                         </div>
                         <div>
                             <label for="banco" class="block text-sm font-medium text-gray-700 mb-1">Banco</label>
-                            <input type="text" id="banco" name="banco" required
+                            <input type="text" id="banco" name="banco"
                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm">
+                            <div id="bancoError" class="error-message hidden"></div>
                         </div>
                         <div>
                             <label for="iban" class="block text-sm font-medium text-gray-700 mb-1">IBAN</label>
                             <!-- Validación IBAN España: ES + 2 dígitos + 20 alfanuméricos -->
-                            <input type="text" id="iban" name="iban" required pattern="^[A-Z]{2}[0-9]{2}(?:[ ]?[0-9]{4}){4}(?:[ ]?[0-9]{2})?$" title="Formato IBAN: ESXX XXXX XXXX XXXX XXXX XXXX (con o sin espacios)"
+                            <input type="text" id="iban" name="iban" pattern="^[A-Z]{2}[0-9]{2}(?:[ ]?[0-9]{4}){4}(?:[ ]?[0-9]{2})?$" title="Formato IBAN: ESXX XXXX XXXX XXXX XXXX XXXX (con o sin espacios)"
                                    class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm placeholder-gray-400"
                                    placeholder="ESXX XXXX XXXX XXXX XXXX XXXX">
+                            <div id="ibanError" class="error-message hidden"></div>
                         </div>
                     </div>
                 </div>
@@ -318,18 +362,21 @@
                     <div>
                         <label for="tlfInstalador" class="block text-sm font-medium text-gray-700 mb-1">Nº de Teléfono del Instalador</label>
                         <!-- Validación para número de teléfono español (9 dígitos, opcionalmente con prefijo +34) -->
-                        <input type="tel" id="tlfInstalador" name="tlfInstalador" required pattern="^(\+34|0034)?[6789]\d{8}$" title="Formato de teléfono: 9 dígitos (ej. 6XXXXXXXX) o con +34"
+                        <input type="tel" id="tlfInstalador" name="tlfInstalador" pattern="^(\+34|0034)?[6789]\d{8}$" title="Formato de teléfono: 9 dígitos (ej. 6XXXXXXXX) o con +34"
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                        <div id="tlfInstaladorError" class="error-message hidden"></div>
                     </div>
                     <div>
                         <label for="fechaInstalacion" class="block text-sm font-medium text-gray-700 mb-1">Fecha de Instalación</label>
-                        <input type="date" id="fechaInstalacion" name="fechaInstalacion" required
+                        <input type="date" id="fechaInstalacion" name="fechaInstalacion"
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                        <div id="fechaInstalacionError" class="error-message hidden"></div>
                     </div>
                     <div>
                         <label for="horaInstalacion" class="block text-sm font-medium text-gray-700 mb-1">Hora de Instalación</label>
-                        <input type="time" id="horaInstalacion" name="horaInstalacion" required
+                        <input type="time" id="horaInstalacion" name="horaInstalacion"
                                class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 sm:text-sm">
+                        <div id="horaInstalacionError" class="error-message hidden"></div>
                     </div>
                     <div class="md:col-span-2">
                         <div class="flex items-center">
@@ -357,7 +404,7 @@
 
     <script>
         // ¡IMPORTANTE! Reemplaza esta URL con la URL de tu Web App de Google Apps Script
-        const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzPx0diQcFHQ9fPxUXDqY91_Lceq9UhbRNwO0SZzQh8KGsx2URvBlpe4YO-sgSbAcD/exec'; 
+        const GOOGLE_APP_SCRIPT_URL = 'URL_DE_TU_WEB_APP_DE_GOOGLE_APPS_SCRIPT'; 
 
         const form = document.getElementById('installationForm');
         const formMessage = document.getElementById('formMessage');
@@ -401,43 +448,47 @@
                     let ciudad = '';
                     let provincia = '';
 
-                    // Intentar extraer ciudad y provincia de la respuesta de Nominatim
-                    // Nominatim puede devolver la provincia en 'state' o 'county'
-                    // Para España, 'state' suele ser la comunidad autónoma, y 'county' o 'province' la provincia
-                    // Ajustamos la lógica para buscar por nombres comunes de provincias españolas
-                    
                     ciudad = result.city || result.town || result.village || result.county;
-                    provincia = result.province; // Buscar en varios campos
+                    provincia = result.province; 
 
-                    // Pequeño mapeo para algunas provincias que Nominatim podría devolver de forma genérica
                     const provinceMapping = {
                         'comunidad de madrid': 'Madrid',
-                        'comunitat valenciana': 'Valencia', // Podría ser Valencia, Alicante, Castellón
-                        'cataluña': 'Barcelona', // Podría ser Barcelona, Girona, Lleida, Tarragona
-                        'andalucía': 'Sevilla', // Etc.
-                        'país vasco': 'Vizcaya', // O Álava, Guipúzcoa
-                        // Añade más mapeos si encuentras inconsistencias
+                        'comunitat valenciana': 'Valencia',
+                        'cataluña': 'Barcelona',
+                        'andalucía': 'Sevilla',
+                        'país vasco': 'Vizcaya', 
+                        'castilla y león': 'Valladolid', 
+                        'castilla-la mancha': 'Toledo', 
+                        'galicia': 'La Coruna', 
+                        'aragón': 'Zaragoza', 
+                        'canarias': 'Las Palmas', 
+                        'murcia': 'Murcia', 
+                        'extremadura': 'Badajoz', 
+                        'navarra': 'Navarra', 
+                        'cantabria': 'Cantabria', 
+                        'princ. de asturias': 'Asturias', 
+                        'baleares': 'Islas Baleares', 
+                        'la rioja': 'La Rioja', 
+                        'ceuta': 'Ceuta', 
+                        'melilla': 'Melilla' 
                     };
 
-                    // Normalizar y aplicar mapeo
                     const normalizeText = (text) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
                     const normalizedProvincia = normalizeText(provincia);
 
                     if (provinceMapping[normalizedProvincia]) {
                         provincia = provinceMapping[normalizedProvincia];
                     } else {
-                        // Si no hay mapeo, intenta usar el nombre tal cual, capitalizando la primera letra
                         provincia = provincia.charAt(0).toUpperCase() + provincia.slice(1);
                     }
 
                     if (ciudad && provincia) {
-                        console.log(`Datos de Nominatim para CP ${postalCode}: Ciudad '${ciudad}', Provincia '${provincia}'`); // Para depuración
                         return { success: true, ciudad: ciudad, provincia: provincia };
                     } else {
-                        return { success: false, message: 'Datos de población/provincia incompletos para este CP. Por favor, rellena manualmente.' };
+                        return { success: false, message: 'Datos de población/provincia incompletos para este CP.' };
                     }
                 } else {
-                    return { success: false, message: 'Código postal no encontrado en España. Por favor, introduce manualmente.' };
+                    return { success: false, message: 'Código postal no encontrado en España.' };
                 }
             } catch (error) {
                 console.error('Error al consultar la API de Nominatim:', error);
@@ -450,109 +501,180 @@
          * @param {HTMLElement} postalCodeInput - El input del código postal.
          * @param {HTMLElement} poblacionInput - El input de la población/localidad.
          * @param {HTMLElement} provinciaSelect - El select de la provincia.
+         * @param {HTMLElement} errorElementCP - El div de error asociado al CP.
+         * @param {HTMLElement} errorElementPoblacion - El div de error asociado a la población.
+         * @param {HTMLElement} errorElementProvincia - El div de error asociado a la provincia.
          */
-        async function autocompleteAddress(postalCodeInput, poblacionInput, provinciaSelect) {
+        async function autocompleteAddress(postalCodeInput, poblacionInput, provinciaSelect, errorElementCP, errorElementPoblacion, errorElementProvincia) {
             const postalCode = postalCodeInput.value.trim();
 
-            // Limpia los campos si el CP está vacío o es inválido
-            if (postalCode.length !== 5 || !/^[0-9]{5}$/.test(postalCode)) {
-                poblacionInput.value = '';
-                provinciaSelect.value = '';
-                // Habilitar selección manual si el CP es inválido
-                poblacionInput.readOnly = false;
-                provinciaSelect.readOnly = false;
-                return;
-            }
+            // Limpia mensajes de error previos
+            errorElementCP.classList.add('hidden');
+            errorElementPoblacion.classList.add('hidden');
+            errorElementProvincia.classList.add('hidden');
+            postalCodeInput.classList.remove('input-error');
+            poblacionInput.classList.remove('input-error');
+            provinciaSelect.classList.remove('input-error');
 
-            // Deshabilitar campos mientras se busca
-            poblacionInput.readOnly = true;
-            provinciaSelect.readOnly = true;
-            poblacionInput.value = 'Buscando...';
-            // provinciaSelect.value = ''; // No limpiar completamente para mantener la opción 'Selecciona una provincia'
+            // Solo buscar si el CP tiene 5 dígitos y es numérico
+            if (postalCode.length === 5 && /^[0-9]{5}$/.test(postalCode)) {
+                // Deshabilitar campos mientras se busca
+                poblacionInput.readOnly = true;
+                provinciaSelect.readOnly = true;
+                poblacionInput.value = 'Buscando...';
+                provinciaSelect.value = ''; // Limpiar select antes de buscar
 
-            try {
-                const data = await fetchPostalCodeData(postalCode); 
-                if (data.success) {
-                    poblacionInput.value = data.ciudad;
-                    
-                    // Normalizar el nombre de provincia de la API para la comparación
-                    const normalizedDataProvincia = data.provincia.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                try {
+                    const data = await fetchPostalCodeData(postalCode); 
+                    if (data.success) {
+                        poblacionInput.value = data.ciudad;
+                        
+                        // Normalizar el nombre de provincia de la API para la comparación
+                        const normalizedDataProvincia = data.provincia.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-                    let optionFound = false;
-                    Array.from(provinciaSelect.options).forEach(option => {
-                        const normalizedOption = option.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-                        if (normalizedOption === normalizedDataProvincia) {
-                            provinciaSelect.value = option.value; // Establece el valor exacto de la opción
-                            optionFound = true;
+                        let optionFound = false;
+                        Array.from(provinciaSelect.options).forEach(option => {
+                            const normalizedOption = option.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+                            if (normalizedOption === normalizedDataProvincia) {
+                                provinciaSelect.value = option.value; // Establece el valor exacto de la opción
+                                optionFound = true;
+                            }
+                        });
+                        
+                        if (!optionFound) {
+                            console.warn(`Provincia '${data.provincia}' obtenida de la API no encontrada en la lista de opciones del select.`);
+                            provinciaSelect.value = ''; // Si no se encuentra una coincidencia exacta, se queda la opción por defecto o vacía
                         }
-                    });
-                    
-                    if (!optionFound) {
-                        console.warn(`Provincia '${data.provincia}' obtenida de la API no encontrada en la lista de opciones del select.`);
-                        // Si no se encuentra una coincidencia exacta, se queda la opción por defecto o vacía
-                        provinciaSelect.value = ''; 
-                    }
-                    poblacionInput.readOnly = true; // Mantener readonly si se encontró
-                    provinciaSelect.readOnly = true; // Mantener readonly si se encontró
+                        
+                        // Mantener los campos como readonly si se encontró el CP y se autocompletó
+                        poblacionInput.readOnly = true; 
+                        provinciaSelect.readOnly = true; 
+                        formMessage.classList.add('hidden'); // Ocultar mensaje general si la búsqueda fue exitosa
+                        
+                    } else {
+                        // Si la búsqueda no fue exitosa
+                        poblacionInput.value = '';
+                        provinciaSelect.value = '';
+                        poblacionInput.readOnly = false; // Habilitar para entrada manual
+                        provinciaSelect.readOnly = false; // Habilitar para entrada manual
 
-                } else {
+                        // Mostrar mensaje de error en la UI (en el div de error del CP)
+                        errorElementCP.textContent = data.message;
+                        errorElementCP.classList.remove('hidden');
+                        postalCodeInput.classList.add('input-error');
+
+                        formMessage.classList.remove('hidden', 'bg-blue-100', 'text-blue-700', 'bg-green-100', 'text-green-700');
+                        formMessage.classList.add('bg-orange-100', 'text-orange-700');
+                        formMessage.textContent = "Error de autocompletado para el Código Postal: " + data.message;
+                        formMessage.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error('Error general al obtener datos del código postal:', error);
                     poblacionInput.value = '';
                     provinciaSelect.value = '';
-                    // Mostrar mensaje de error en la UI
+                    poblacionInput.readOnly = false; // Habilitar para entrada manual
+                    provinciaSelect.readOnly = false; // Habilitar para entrada manual
+
+                    errorElementCP.textContent = 'Error de conexión con el servicio de CP.';
+                    errorElementCP.classList.remove('hidden');
+                    postalCodeInput.classList.add('input-error');
+
                     formMessage.classList.remove('hidden', 'bg-blue-100', 'text-blue-700', 'bg-green-100', 'text-green-700');
-                    formMessage.classList.add('bg-orange-100', 'text-orange-700'); // Color para advertencia
-                    formMessage.textContent = data.message; // Mensaje de error más específico de la función
+                    formMessage.classList.add('bg-red-100', 'text-red-700');
+                    formMessage.textContent = 'Error de red o servicio de CP. Por favor, inténtalo de nuevo o rellena manualmente.';
                     formMessage.classList.remove('hidden');
-                    // Habilitar campos para entrada manual si no se encontró
-                    poblacionInput.readOnly = false;
-                    provinciaSelect.readOnly = false;
                 }
-            } catch (error) {
-                console.error('Error general al obtener datos del código postal:', error);
+            } else {
+                // Si el CP no es válido o está vacío
                 poblacionInput.value = '';
                 provinciaSelect.value = '';
-                formMessage.classList.remove('hidden', 'bg-blue-100', 'text-blue-700', 'bg-green-100', 'text-green-700');
-                formMessage.classList.add('bg-red-100', 'text-red-700');
-                formMessage.textContent = 'Error de red o servicio de CP. Por favor, inténtalo de nuevo o rellena manualmente.';
-                formMessage.classList.remove('hidden');
-            } finally {
-                // La lógica de readOnly ahora se gestiona dentro del if/else de data.success
+                poblacionInput.readOnly = false; // Habilitar para entrada manual
+                provinciaSelect.readOnly = false; // Habilitar para entrada manual
+                
+                // Si el campo es requerido, mostrar error aquí
+                if (postalCodeInput.hasAttribute('required') && postalCode.length === 0) {
+                    errorElementCP.textContent = 'Este campo es obligatorio.';
+                    errorElementCP.classList.remove('hidden');
+                    postalCodeInput.classList.add('input-error');
+                } else if (postalCode.length > 0 && postalCode.length !== 5) {
+                     errorElementCP.textContent = 'El Código Postal debe tener 5 dígitos.';
+                    errorElementCP.classList.remove('hidden');
+                    postalCodeInput.classList.add('input-error');
+                } else if (postalCode.length > 0 && !/^[0-9]{5}$/.test(postalCode)) {
+                    errorElementCP.textContent = 'El Código Postal solo debe contener números.';
+                    errorElementCP.classList.remove('hidden');
+                    postalCodeInput.classList.add('input-error');
+                }
+                formMessage.classList.add('hidden'); // Ocultar mensaje general si el CP es corto/inválido
             }
         }
 
-        // Añadir escuchadores de eventos para el Código Postal de Instalación
-        codigoPostalInput.addEventListener('input', () => {
-            // Solo buscar si el CP tiene 5 dígitos
-            if (codigoPostalInput.value.trim().length === 5) {
-                autocompleteAddress(codigoPostalInput, poblacionLocalidadInput, provinciaSelect);
-            } else {
-                poblacionLocalidadInput.value = '';
-                provinciaSelect.value = '';
-                poblacionLocalidadInput.readOnly = false;
-                provinciaSelect.readOnly = false;
-                formMessage.classList.add('hidden'); // Ocultar mensaje si el CP es corto
-            }
-        });
 
-        // Añadir escuchadores de eventos para el Código Postal de Contacto
-        contactoCodigoPostalInput.addEventListener('input', () => {
-            // Solo buscar si el CP tiene 5 dígitos
-            if (contactoCodigoPostalInput.value.trim().length === 5) {
-                autocompleteAddress(contactoCodigoPostalInput, contactoPoblacionLocalidadInput, contactoProvinciaSelect);
-            } else {
-                contactoPoblacionLocalidadInput.value = '';
-                contactoProvinciaSelect.value = '';
-                contactoPoblacionLocalidadInput.readOnly = false;
-                contactoProvinciaSelect.readOnly = false;
-                formMessage.classList.add('hidden'); // Ocultar mensaje si el CP es corto
-            }
-        });
-
-
+        // Event listener para el envío del formulario
         form.addEventListener('submit', async (event) => {
             event.preventDefault(); // Previene el envío tradicional del formulario
 
-            // Oculta cualquier mensaje anterior y muestra uno de carga
+            let formIsValid = true;
+
+            // Validar todos los campos antes de enviar
+            // Dirección de Instalación (obligatorios)
+            formIsValid = validateField(document.getElementById('tipoVia'), document.getElementById('tipoViaError'), 'Por favor, selecciona un tipo de vía.') && formIsValid;
+            formIsValid = validateField(document.getElementById('nombreVia'), document.getElementById('nombreViaError'), 'Introduce el nombre de la vía.') && formIsValid;
+            formIsValid = validateField(document.getElementById('numero'), document.getElementById('numeroError'), 'Introduce el número.') && formIsValid;
+            formIsValid = validateField(document.getElementById('codigoPostal'), document.getElementById('codigoPostalError'), 'Introduce un código postal válido (5 dígitos).') && formIsValid;
+            formIsValid = validateField(document.getElementById('poblacionLocalidad'), document.getElementById('poblacionLocalidadError'), 'La población es obligatoria y debe ser autocompletada o rellenada manualmente.') && formIsValid;
+            formIsValid = validateField(document.getElementById('provincia'), document.getElementById('provinciaError'), 'La provincia es obligatoria y debe ser autocompletada o seleccionada manualmente.') && formIsValid;
+            
+            // Campos opcionales de Dirección de Instalación que aún pueden tener validación de patrón si se rellenan
+            formIsValid = validateField(document.getElementById('bloquePortal'), document.getElementById('bloquePortalError'), 'Introduce el bloque/portal.') && formIsValid;
+
+
+            // Datos de la Comunidad/Empresa (obligatorios)
+            formIsValid = validateField(document.getElementById('denominacionNombre'), document.getElementById('denominacionNombreError'), 'Introduce la denominación o nombre.') && formIsValid;
+            formIsValid = validateField(document.getElementById('tlfComunidad'), document.getElementById('tlfComunidadError'), 'Introduce un número de teléfono de la comunidad válido.') && formIsValid; // NUEVO CAMPO OBLIGATORIO
+            // CIF es opcional ahora, pero se valida si se introduce
+            formIsValid = validateField(document.getElementById('cif'), document.getElementById('cifError'), 'Introduce un CIF/NIF válido (ej. A12345678).') && formIsValid;
+
+            // Datos de Contacto (Administrativos y Facturación)
+            formIsValid = validateField(document.getElementById('contactoAAFF'), document.getElementById('contactoAAFFError'), 'Introduce la persona de contacto.') && formIsValid;
+            formIsValid = validateField(document.getElementById('emailContacto'), document.getElementById('emailContactoError'), 'Introduce un email válido.') && formIsValid;
+            // tlfContacto ahora es opcional
+            formIsValid = validateField(document.getElementById('tlfContacto'), document.getElementById('tlfContactoError'), 'Introduce un número de teléfono de contacto válido (9 dígitos o con prefijo +34).') && formIsValid; 
+
+            // Dirección Completa de Contacto (todos opcionales, pero se validan si se rellenan)
+            formIsValid = validateField(document.getElementById('contactoTipoVia'), document.getElementById('contactoTipoViaError'), 'Por favor, selecciona un tipo de vía de contacto.') && formIsValid;
+            formIsValid = validateField(document.getElementById('contactoNombreVia'), document.getElementById('contactoNombreViaError'), 'Introduce el nombre de la vía de contacto.') && formIsValid;
+            formIsValid = validateField(document.getElementById('contactoNumero'), document.getElementById('contactoNumeroError'), 'Introduce el número de contacto.') && formIsValid;
+            formIsValid = validateField(document.getElementById('contactoBloquePortal'), document.getElementById('contactoBloquePortalError'), 'Introduce el bloque/portal de contacto.') && formIsValid;
+            formIsValid = validateField(document.getElementById('contactoCodigoPostal'), document.getElementById('contactoCodigoPostalError'), 'Introduce un código postal de contacto válido (5 dígitos).') && formIsValid;
+            formIsValid = validateField(document.getElementById('contactoPoblacionLocalidad'), document.getElementById('contactoPoblacionLocalidadError'), 'La población de contacto es obligatoria si se ingresa CP.') && formIsValid;
+            formIsValid = validateField(document.getElementById('contactoProvincia'), document.getElementById('contactoProvinciaError'), 'La provincia de contacto es obligatoria si se ingresa CP.') && formIsValid;
+
+            // Datos Bancarios (todos opcionales, pero se validan si se rellenan)
+            formIsValid = validateField(document.getElementById('titularCuenta'), document.getElementById('titularCuentaError'), 'Introduce el titular de la cuenta.') && formIsValid;
+            formIsValid = validateField(document.getElementById('banco'), document.getElementById('bancoError'), 'Introduce el nombre del banco.') && formIsValid;
+            formIsValid = validateField(document.getElementById('iban'), document.getElementById('ibanError'), 'Introduce un IBAN válido (ej. ESXX XXXX XXXX XXXX XXXX XXXX).') && formIsValid;
+
+            // Datos del Instalador y Cita (todos opcionales, pero se validan si se rellenan)
+            formIsValid = validateField(document.getElementById('tlfInstalador'), document.getElementById('tlfInstaladorError'), 'Introduce un número de teléfono válido (9 dígitos o con prefijo +34).') && formIsValid;
+            formIsValid = validateField(document.getElementById('fechaInstalacion'), document.getElementById('fechaInstalacionError'), 'Selecciona la fecha de instalación.') && formIsValid;
+            formIsValid = validateField(document.getElementById('horaInstalacion'), document.getElementById('horaInstalacionError'), 'Selecciona la hora de instalación.') && formIsValid;
+            
+            // Si el formulario no es válido, detenemos el envío y mostramos un mensaje general.
+            if (!formIsValid) {
+                formMessage.classList.remove('hidden', 'bg-blue-100', 'text-blue-700', 'bg-green-100', 'text-green-700', 'bg-orange-100', 'text-orange-700');
+                formMessage.classList.add('bg-red-100', 'text-red-700');
+                formMessage.textContent = 'Por favor, corrige los errores en el formulario antes de enviar.';
+                formMessage.classList.remove('hidden');
+                // Desplazarse al primer error visible
+                const firstErrorField = document.querySelector('.input-error');
+                if (firstErrorField) {
+                    firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return; // Detiene el envío del formulario
+            }
+
+            // Si la validación en el cliente pasa, procede con el envío
             formMessage.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-orange-100', 'text-orange-700');
             formMessage.classList.add('bg-blue-100', 'text-blue-700');
             formMessage.textContent = 'Enviando datos... Por favor, espera.';
@@ -562,16 +684,16 @@
             try {
                 const response = await fetch(GOOGLE_APP_SCRIPT_URL, {
                     method: 'POST',
-                    body: formData // Envía los datos directamente como FormData
+                    body: formData 
                 });
 
                 if (response.ok) {
-                    const resultText = await response.text(); // El script de Apps Script devuelve texto
+                    const resultText = await response.text();
                     formMessage.classList.remove('bg-blue-100', 'text-blue-700', 'bg-red-100', 'text-red-700', 'bg-orange-100', 'text-orange-700');
                     formMessage.classList.add('bg-green-100', 'text-green-700');
-                    formMessage.textContent = '¡Formulario enviado con éxito! Los datos han sido guardados. ' + resultText;
+                    formMessage.textContent = '¡Formulario enviado con éxito! Los datos han sido guardados. ';
                     formMessage.classList.remove('hidden');
-                    form.reset(); // Limpia los campos del formulario
+                    form.reset(); 
                 } else {
                     const errorText = await response.text();
                     throw new Error(`Error al enviar el formulario: ${response.status} - ${errorText}`);
@@ -582,6 +704,30 @@
                 formMessage.classList.add('bg-red-100', 'text-red-700');
                 formMessage.textContent = 'Error al enviar el formulario. Por favor, inténtalo de nuevo. Detalle: ' + error.message;
                 formMessage.classList.remove('hidden');
+            }
+        });
+
+        // Autocompletado del código postal y validación en tiempo real (al escribir y al perder el foco)
+        codigoPostalInput.addEventListener('input', () => autocompleteAddress(codigoPostalInput, poblacionLocalidadInput, provinciaSelect, document.getElementById('codigoPostalError'), document.getElementById('poblacionLocalidadError'), document.getElementById('provinciaError')));
+        codigoPostalInput.addEventListener('blur', () => autocompleteAddress(codigoPostalInput, poblacionLocalidadInput, provinciaSelect, document.getElementById('codigoPostalError'), document.getElementById('poblacionLocalidadError'), document.getElementById('provinciaError')));
+
+        contactoCodigoPostalInput.addEventListener('input', () => autocompleteAddress(contactoCodigoPostalInput, contactoPoblacionLocalidadInput, contactoProvinciaSelect, document.getElementById('contactoCodigoPostalError'), document.getElementById('contactoPoblacionLocalidadError'), document.getElementById('contactoProvinciaError')));
+        contactoCodigoPostalInput.addEventListener('blur', () => autocompleteAddress(contactoCodigoPostalInput, contactoPoblacionLocalidadInput, contactoProvinciaSelect, document.getElementById('contactoCodigoPostalError'), document.getElementById('contactoPoblacionLocalidadError'), document.getElementById('contactoProvinciaError')));
+
+
+        // Añadir escuchadores de eventos para validación en tiempo real (al salir del campo)
+        document.querySelectorAll('input:not([type="checkbox"]):not([readonly]), select:not([readonly])').forEach(input => {
+            // Excluimos los campos de código postal que ya tienen su propia lógica de input/blur
+            if (input.id !== 'codigoPostal' && input.id !== 'contactoCodigoPostal') {
+                input.addEventListener('blur', () => {
+                    const errorElementId = input.id + 'Error';
+                    const errorElement = document.getElementById(errorElementId);
+                    if (errorElement) { // Asegurarse de que el div de error exista
+                        // Usar el título del input como mensaje genérico, o un mensaje predeterminado si es un select
+                        const customMessage = input.tagName === 'SELECT' ? 'Por favor, selecciona una opción.' : input.title;
+                        validateField(input, errorElement, customMessage);
+                    }
+                });
             }
         });
     </script>
